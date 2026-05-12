@@ -508,27 +508,8 @@
               <div class="result-icon success">✓</div>
               <h2>支付成功！</h2>
               <p>您的订单已成功支付。</p>
-              <div class="order-details">
-                <div class="detail-item">
-                  <span>订单号：</span>
-                  <span>{{ orderId }}</span>
-                </div>
-                <div class="detail-item">
-                  <span>支付金额：</span>
-                  <span>¥{{ productPrice }}</span>
-                </div>
-                <div class="detail-item">
-                  <span>支付方式：</span>
-                  <span v-if="currentPaymentMethod === 'card'">银行卡 ({{ maskedCardNumber }})</span>
-                  <span v-else-if="currentPaymentMethod === 'paypal'">PayPal</span>
-                </div>
-                <div class="detail-item">
-                  <span>支付时间：</span>
-                  <span>{{ paymentTime }}</span>
-                </div>
-              </div>
               <button class="result-button primary" @click="handlePaymentComplete">
-                完成
+                完成{{ successCountdown > 0 ? ` (${successCountdown})` : '' }}
               </button>
             </div>
 
@@ -695,6 +676,8 @@ const verificationMethod = ref('') // 'sms', 'email'
 const verificationCode = ref('')
 const codeSent = ref(false)
 const countdown = ref(0)
+const successCountdown = ref(5) // 支付成功弹窗倒计时（秒）
+const successCountdownTimer = ref(null) // 倒计时定时器
 
 // 已保存卡
 const selectedSavedCardIndex = ref(-1)
@@ -986,6 +969,47 @@ const handlePayPalCancelConfirm = () => {
     resetPaymentStatus()
 }
 
+// 启动支付成功倒计时
+const startSuccessCountdown = () => {
+  // 清除之前的定时器
+  if (successCountdownTimer.value) {
+    clearInterval(successCountdownTimer.value)
+    successCountdownTimer.value = null
+  }
+  
+  // 重置倒计时
+  successCountdown.value = 5
+  
+  // 启动倒计时
+  successCountdownTimer.value = setInterval(() => {
+    successCountdown.value--
+    if (successCountdown.value <= 0) {
+      // 倒计时结束，自动关闭
+      clearInterval(successCountdownTimer.value)
+      successCountdownTimer.value = null
+      handlePaymentComplete()
+    }
+  }, 1000)
+}
+
+// 清除支付成功倒计时
+const clearSuccessCountdown = () => {
+  if (successCountdownTimer.value) {
+    clearInterval(successCountdownTimer.value)
+    successCountdownTimer.value = null
+  }
+  successCountdown.value = 5
+}
+
+// 监听 currentStep 变化，当变为 success 时启动倒计时
+watch(currentStep, (newStep) => {
+  if (newStep === 'success') {
+    startSuccessCountdown()
+  } else {
+    clearSuccessCountdown()
+  }
+})
+
 onMounted(() => {
   window.addEventListener('continue-3ds-payment', handleContinue3DSPayment)
   window.addEventListener('show-paypal-cancel-dialog', handleShowPayPalCancelDialog)
@@ -994,6 +1018,7 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('continue-3ds-payment', handleContinue3DSPayment)
   window.removeEventListener('show-paypal-cancel-dialog', handleShowPayPalCancelDialog)
+  clearSuccessCountdown()
 })
 
 const resetPaymentStatus = () => {
@@ -1539,6 +1564,9 @@ const handlePaymentError = () => {
 }
 
 const handlePaymentComplete = () => {
+  // 清除倒计时
+  clearSuccessCountdown()
+  
   // 如果是 PayPal 支付成功，传递支付方式信息以便重定向到游戏界面
   if (currentPaymentMethod.value === 'paypal') {
     emit('payment-success', {
@@ -1670,11 +1698,11 @@ const openPrivacy = () => {
 
 <style scoped>
 .checkout-overlay {
-  position: fixed;
+  position: absolute;
   top: 0;
   right: 0;
   bottom: 0;
-  left: 25%;
+  left: 0;
   background-color: rgba(15, 23, 42, 0.6);
   display: flex;
   align-items: center;
@@ -1683,16 +1711,17 @@ const openPrivacy = () => {
 }
 
 .checkout-modal {
-  width: 960px;
-  max-width: 96vw;
-  max-height: 92vh;
+  width: 760px;
+  max-width: 86vw;
+  max-height: 82vh;
   background-color: #f9fafb;
-  border-radius: 12px;
-  box-shadow: 0 25px 50px rgba(15, 23, 42, 0.4);
+  border-radius: 10px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.35);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   position: relative;
+  font-size: 13px;
 }
 
 .checkout-modal.browser-window {
@@ -1891,13 +1920,13 @@ const openPrivacy = () => {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  padding: 16px 20px;
+  padding: 8px 16px;
 }
 
 .checkout-close-btn {
   border: none;
-  width: 32px;
-  height: 32px;
+  width: 26px;
+  height: 26px;
   border-radius: 6px;
   background-color: transparent;
   color: #6b7280;
@@ -1905,7 +1934,7 @@ const openPrivacy = () => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 20px;
+  font-size: 18px;
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 
@@ -1922,13 +1951,13 @@ const openPrivacy = () => {
 
 .title {
   margin: 0;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
 }
 
 .subtitle {
   margin: 0;
-  font-size: 13px;
+  font-size: 12px;
   color: #9ca3af;
 }
 
@@ -1953,7 +1982,7 @@ const openPrivacy = () => {
 }
 
 .checkout-body {
-  padding: 24px;
+  padding: 16px 20px 20px;
   overflow-y: auto;
   flex: 1;
   min-height: 0;
@@ -1995,19 +2024,19 @@ const openPrivacy = () => {
 }
 
 .checkout-page-header {
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .checkout-page-title {
   margin: 0;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   color: #111827;
 }
 
 .checkout-page-subtitle {
   margin: 4px 0 0;
-  font-size: 13px;
+  font-size: 12px;
   color: #6b7280;
 }
 
@@ -3222,10 +3251,6 @@ const openPrivacy = () => {
 
   .checkout-layout {
     grid-template-columns: 1fr;
-  }
-
-  .checkout-overlay {
-    left: 0;
   }
 }
 </style>

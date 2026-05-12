@@ -177,24 +177,6 @@
             <div class="result-icon success">✓</div>
             <h2>支付成功！</h2>
             <p>您的订单已成功支付</p>
-            <div class="order-details">
-              <div class="detail-item">
-                <span>订单号：</span>
-                <span>{{ orderId }}</span>
-              </div>
-              <div class="detail-item">
-                <span>支付金额：</span>
-                <span>¥{{ productPrice }}</span>
-              </div>
-              <div class="detail-item">
-                <span>支付方式：</span>
-                <span>银行卡 ({{ maskedCardNumber }})</span>
-              </div>
-              <div class="detail-item">
-                <span>支付时间：</span>
-                <span>{{ paymentTime }}</span>
-              </div>
-            </div>
             <button class="payment-button primary" @click="handleReturn">完成</button>
           </div>
           

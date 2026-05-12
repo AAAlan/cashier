@@ -242,22 +242,69 @@
           </div>
         </div>
       </div>
+      <!-- 收银台挂载在 demo 中间区域 -->
+      <div class="checkout-anchor">
+        <Checkout
+          :visible="checkoutVisible"
+          :product-name="productName"
+          :product-price="productPrice"
+          :payment-scenario="paymentScenario"
+          :initial-card-data="mockCardData"
+          @close="handleCheckoutClose"
+          @payment-success="handlePaymentSuccess"
+          @payment-error="handlePaymentError"
+          @jump-to-card="handleJumpToCard"
+          @open-3ds="handleOpen3DS"
+          @open-paypal="handleOpenPayPal"
+        />
+      </div>
     </main>
 
-    <!-- 收银台组件 -->
-    <Checkout
-      :visible="checkoutVisible"
-      :product-name="productName"
-      :product-price="productPrice"
-      :payment-scenario="paymentScenario"
-      :initial-card-data="mockCardData"
-      @close="handleCheckoutClose"
-      @payment-success="handlePaymentSuccess"
-      @payment-error="handlePaymentError"
-      @jump-to-card="handleJumpToCard"
-      @open-3ds="handleOpen3DS"
-      @open-paypal="handleOpenPayPal"
-    />
+    <!-- 右侧交互说明 -->
+    <aside class="help-panel">
+      <div class="help-header">
+        <h2>交互说明</h2>
+      </div>
+      <div class="help-content">
+        <section class="help-section">
+          <h3 class="help-section-title">打开收银台</h3>
+          <p class="help-text">在中间游戏区域点击「购买」按钮或商品卡片，会弹出收银台浮层。</p>
+        </section>
+        <section class="help-section">
+          <h3 class="help-section-title">支付方式</h3>
+          <p class="help-text">收银台支持<strong>信用卡/借记卡</strong>与<strong>PayPal</strong>。点击对应选项切换，选中的方式会高亮显示。</p>
+        </section>
+        <section class="help-section">
+          <h3 class="help-section-title">银行卡支付</h3>
+          <ul class="help-list">
+            <li>填写持卡人姓名、卡号、有效期(MM/YY)、CVV；卡号会自动按 4 位空格格式化。</li>
+            <li>支持 VISA、Mastercard、AMEX、Discover；输入卡号后可自动识别卡品牌。</li>
+            <li>若左侧选择了「免 CVV 快速支付」或「已保存卡需 CVV」，会显示已保存卡列表，可选中后一键支付或仅输入 CVV。</li>
+            <li>可勾选「保存此卡信息」以便下次使用（演示环境）。</li>
+          </ul>
+        </section>
+        <section class="help-section">
+          <h3 class="help-section-title">账单信息</h3>
+          <p class="help-text">当左侧选择「收集邮编」「收集邮箱」或「收集邮编和邮箱」时，右侧会显示账单信息区域，需按提示填写邮编或邮箱；填写邮编后会计算并显示税费与总计。</p>
+        </section>
+        <section class="help-section">
+          <h3 class="help-section-title">协议与提交</h3>
+          <p class="help-text">需勾选「我已阅读并同意服务协议和隐私政策」方可点击「去支付」。点击「去支付」后会进行表单校验，通过则进入支付处理或 3DS/PayPal 流程。</p>
+        </section>
+        <section class="help-section">
+          <h3 class="help-section-title">3DS 与 PayPal</h3>
+          <p class="help-text">选择 3DS 验证场景时，点击「去支付」会先打开 3D Secure 验证页，完成验证后关闭验证页并继续支付。选择 PayPal 时会打开 PayPal 支付页，完成或取消后返回收银台。</p>
+        </section>
+        <section class="help-section">
+          <h3 class="help-section-title">关闭与取消</h3>
+          <p class="help-text">点击收银台右上角「✕」或点击遮罩，若尚未支付会弹出「确认要取消支付吗？」；选择「继续支付」留在收银台，选择「确认取消」关闭收银台。</p>
+        </section>
+        <section class="help-section">
+          <h3 class="help-section-title">支付结果</h3>
+          <p class="help-text">支付成功会显示「支付成功！」弹窗，可点击「完成」或等待倒计时后关闭。支付失败会显示具体原因，可点击「返回重新支付」回到表单。订单超时场景下点击「去支付」会提示「订单已超时」并需重新下单。</p>
+        </section>
+      </div>
+    </aside>
 
     <!-- 3DS 验证 Webview -->
     <div v-if="threeDSWebviewVisible" class="webview-overlay">
@@ -852,6 +899,25 @@ const handleCardError = (errorMessage) => {
   justify-content: center;
   background-color: #f5f5f5;
   padding: 40px;
+  position: relative;
+  min-width: 0;
+}
+
+/* 收银台挂载在 demo 中间，覆盖中间区域 */
+.checkout-anchor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.checkout-anchor > * {
+  pointer-events: auto;
 }
 
 .game-container {
@@ -885,6 +951,82 @@ const handleCardError = (errorMessage) => {
   align-items: center;
   justify-content: center;
   padding: 40px;
+}
+
+/* 右侧交互说明 */
+.help-panel {
+  width: 26%;
+  min-width: 280px;
+  max-width: 380px;
+  background-color: #ffffff;
+  border-left: 1px solid #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -2px 0 4px rgba(0, 0, 0, 0.05);
+}
+
+.help-header {
+  padding: 20px;
+  border-bottom: 1px solid #e0e0e0;
+  background-color: #fafafa;
+}
+
+.help-header h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.help-content {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.help-section {
+  margin-bottom: 20px;
+}
+
+.help-section:last-child {
+  margin-bottom: 0;
+}
+
+.help-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 8px 0;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.help-text {
+  font-size: 13px;
+  color: #555;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.help-text strong {
+  color: #333;
+  font-weight: 600;
+}
+
+.help-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  color: #555;
+  line-height: 1.65;
+}
+
+.help-list li {
+  margin-bottom: 6px;
+}
+
+.help-list li:last-child {
+  margin-bottom: 0;
 }
 
 /* 商品元素 */
