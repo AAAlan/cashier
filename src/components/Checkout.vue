@@ -374,16 +374,23 @@
                   class="billing-summary-item"
                   :class="{ 'has-error': zipCodeError }"
                 >
-                  <span class="billing-label">邮编*</span>
+                  <label for="billing-zip-code" class="billing-label">邮编*</label>
                   <input 
+                    id="billing-zip-code"
                     type="text" 
                     v-model="billingForm.zipCode" 
+                    @input="zipCodeError && validateZipCode()"
                     @focus="zipCodeFocused = true"
                     @blur="zipCodeFocused = false; validateZipCode()"
-                    placeholder="ZIP Code"
+                    placeholder="12345 或 12345-6789"
+                    autocomplete="postal-code"
+                    maxlength="10"
+                    aria-describedby="billing-zip-hint"
+                    :aria-invalid="!!zipCodeError"
                     class="billing-input"
                     :disabled="isProcessing"
                   />
+                  <div id="billing-zip-hint" class="billing-zip-hint">5 位邮编，可选填后 4 位（ZIP+4）</div>
                   <div v-if="zipCodeError" class="billing-error-message">
                     {{ zipCodeError }}
                   </div>
@@ -755,6 +762,7 @@ const billingForm = ref({
 const saveBillingInfo = ref(false)
 const zipCodeFocused = ref(false)
 const zipCodeError = ref('')
+const isZipCodeValid = computed(() => /^\d{5}(?:-?\d{4})?$/.test(billingForm.value.zipCode.trim()))
 const emailFocused = ref(false)
 const emailError = ref('')
 
@@ -783,11 +791,10 @@ const taxAmount = computed(() => {
       props.paymentScenario !== 'collect_zip_and_email') {
     return 0
   }
-  const zipCode = billingForm.value.zipCode.trim()
-  if (!zipCode || zipCode.length < 3) {
+  if (!isZipCodeValid.value) {
     return 0
   }
-  // 模拟税费计算：根据邮编计算税费（简单示例：邮编长度 * 0.1）
+  // 模拟税费计算：有效的美国邮编使用固定示例税率
   // 实际场景中，这里应该调用后端API根据邮编计算税费
   const basePrice = parseFloat(props.productPrice) || 0
   const taxRate = 0.08 // 8% 税费率（示例）
@@ -871,7 +878,7 @@ const canSubmit = computed(() => {
     // 如果需要收集账单信息，验证账单信息
   if (showBillingInfo.value) {
       const billingValid = (
-        (!showZipCode.value || billingForm.value.zipCode.trim()) &&
+        (!showZipCode.value || isZipCodeValid.value) &&
         !zipCodeError.value &&
         !emailError.value
       )
@@ -1222,10 +1229,11 @@ const validateZipCode = () => {
     zipCodeError.value = '请输入邮编'
     return false
   }
-  if (zipCode.length < 3 || zipCode.length > 10) {
-    zipCodeError.value = '邮编格式不正确'
+  if (!isZipCodeValid.value) {
+    zipCodeError.value = '请输入 5 位邮编，或完整的 ZIP+4（如 12345-6789）'
     return false
   }
+  billingForm.value.zipCode = zipCode.replace(/^(\d{5})(\d{4})$/, '$1-$2')
   zipCodeError.value = ''
   return true
 }
@@ -2431,6 +2439,12 @@ const openPrivacy = () => {
   transition: all 0.15s;
 }
 
+.billing-zip-hint {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
 .billing-input.readonly {
   background-color: #f3f4f6;
   color: #6b7280;
@@ -3254,5 +3268,3 @@ const openPrivacy = () => {
   }
 }
 </style>
-
-
