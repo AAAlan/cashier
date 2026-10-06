@@ -360,14 +360,17 @@
               <h3 class="summary-title">账单信息</h3>
               <div class="billing-summary-content">
                 <div class="billing-summary-item">
-                  <span class="billing-label">国家</span>
-                  <input
-                    type="text"
-                    value="United States"
-                    class="billing-input readonly"
-                    readonly
-                    disabled
-                  />
+                  <label for="billing-country" class="billing-label">国家</label>
+                  <select
+                    id="billing-country"
+                    v-model="billingForm.country"
+                    class="billing-select"
+                    :disabled="isProcessing"
+                    @change="handleBillingCountryChange"
+                  >
+                    <option value="US">United States</option>
+                    <option value="CA">Canada</option>
+                  </select>
                 </div>
                 <div 
                   v-if="showZipCode"
@@ -382,15 +385,16 @@
                     @input="zipCodeError && validateZipCode()"
                     @focus="zipCodeFocused = true"
                     @blur="zipCodeFocused = false; validateZipCode()"
-                    placeholder="12345 或 12345-6789"
+                    :placeholder="zipCodePlaceholder"
                     autocomplete="postal-code"
-                    maxlength="10"
+                    :inputmode="billingForm.country === 'US' ? 'numeric' : 'text'"
+                    :maxlength="billingForm.country === 'US' ? 10 : 7"
                     aria-describedby="billing-zip-hint"
                     :aria-invalid="!!zipCodeError"
                     class="billing-input"
                     :disabled="isProcessing"
                   />
-                  <div id="billing-zip-hint" class="billing-zip-hint">5 位邮编，可选填后 4 位（ZIP+4）</div>
+                  <div id="billing-zip-hint" class="billing-zip-hint">{{ zipCodeHint }}</div>
                   <div v-if="zipCodeError" class="billing-error-message">
                     {{ zipCodeError }}
                   </div>
@@ -756,13 +760,28 @@ const cardForm = ref({
 
 // 账单信息
 const billingForm = ref({
+  country: 'US',
   zipCode: '',
   email: '',
 })
 const saveBillingInfo = ref(false)
 const zipCodeFocused = ref(false)
 const zipCodeError = ref('')
-const isZipCodeValid = computed(() => /^\d{5}(?:-?\d{4})?$/.test(billingForm.value.zipCode.trim()))
+const isZipCodeValid = computed(() => {
+  const zipCode = billingForm.value.zipCode.trim()
+  if (billingForm.value.country === 'CA') {
+    return /^[ABCEGHJ-NPRSTVXY]\d[ABCEGHJ-NPRSTV-Z] ?\d[ABCEGHJ-NPRSTV-Z]\d$/i.test(zipCode)
+  }
+  return /^\d{5}(?:-?\d{4})?$/.test(zipCode)
+})
+const zipCodePlaceholder = computed(() => (
+  billingForm.value.country === 'CA' ? 'A1A 1A1' : '12345 或 12345-6789'
+))
+const zipCodeHint = computed(() => (
+  billingForm.value.country === 'CA'
+    ? '加拿大邮编格式：字母和数字交替，共 6 位'
+    : '5 位邮编，可选填后 4 位（ZIP+4）'
+))
 const emailFocused = ref(false)
 const emailError = ref('')
 
@@ -794,7 +813,7 @@ const taxAmount = computed(() => {
   if (!isZipCodeValid.value) {
     return 0
   }
-  // 模拟税费计算：有效的美国邮编使用固定示例税率
+  // 模拟税费计算：有效的美国或加拿大邮编使用固定示例税率
   // 实际场景中，这里应该调用后端API根据邮编计算税费
   const basePrice = parseFloat(props.productPrice) || 0
   const taxRate = 0.08 // 8% 税费率（示例）
@@ -1059,6 +1078,7 @@ const resetPaymentStatus = () => {
 
   // 重置账单信息
   billingForm.value = {
+    country: 'US',
     zipCode: '',
     email: '',
   }
@@ -1223,6 +1243,11 @@ const validateCVV = () => {
 }
 
 // 验证邮编
+const handleBillingCountryChange = () => {
+  billingForm.value.zipCode = ''
+  zipCodeError.value = ''
+}
+
 const validateZipCode = () => {
   const zipCode = billingForm.value.zipCode.trim()
   if (!zipCode) {
@@ -1230,10 +1255,14 @@ const validateZipCode = () => {
     return false
   }
   if (!isZipCodeValid.value) {
-    zipCodeError.value = '请输入 5 位邮编，或完整的 ZIP+4（如 12345-6789）'
+    zipCodeError.value = billingForm.value.country === 'CA'
+      ? '请输入有效的加拿大邮编（如 A1A 1A1）'
+      : '请输入 5 位邮编，或完整的 ZIP+4（如 12345-6789）'
     return false
   }
-  billingForm.value.zipCode = zipCode.replace(/^(\d{5})(\d{4})$/, '$1-$2')
+  billingForm.value.zipCode = billingForm.value.country === 'CA'
+    ? zipCode.toUpperCase().replace(/^(.{3}) ?(.{3})$/, '$1 $2')
+    : zipCode.replace(/^(\d{5})(\d{4})$/, '$1-$2')
   zipCodeError.value = ''
   return true
 }
