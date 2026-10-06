@@ -3,17 +3,14 @@
     <div class="checkout-modal">
       <!-- 收银台内容区域 -->
       <div class="checkout-content">
-        <!-- 收银台头部（关闭按钮） -->
-      <div class="checkout-header">
-          <button class="checkout-close-btn" @click="handleClose" title="关闭">✕</button>
-      </div>
+        <!-- 收银台头部 -->
+        <div class="checkout-header">
+          <h2 class="checkout-title">收银台</h2>
+          <button class="checkout-close-btn" @click="handleClose" title="关闭" aria-label="关闭收银台">×</button>
+        </div>
 
         <!-- 支付表单页面 -->
         <div class="checkout-body" :class="{ 'blurred': currentStep === 'success' || currentStep === 'error' }">
-        <div class="checkout-page-header">
-          <h2 class="checkout-page-title">收银台</h2>
-          <p class="checkout-page-subtitle">完成本次支付以获取商品</p>
-          </div>
         <!-- 页面中间的加载spinner -->
         <div v-if="isProcessing" class="page-loading-overlay">
           <div class="page-loading-container">
@@ -25,25 +22,41 @@
           <div class="checkout-left">
         <!-- 支付方式选择 -->
         <div class="payment-methods">
-              <h3>支付方式</h3>
+              <h3>选择支付方式</h3>
           <div class="method-options">
             <div 
               class="method-option" 
               :class="{ active: paymentMethod === 'card' }"
               @click="selectPaymentMethod('card')"
             >
-              <div class="method-icon">💳</div>
-                  <div class="method-name">信用卡 / 借记卡</div>
-                  <div v-if="paymentMethod === 'card'" class="method-check">✓</div>
+              <img class="method-icon" src="../assets/payment-methods/card.png" alt="" />
+                  <div class="method-name">Credit / Debit Card</div>
+                  <span class="method-radio" :class="{ active: paymentMethod === 'card' }"></span>
             </div>
             <div 
-              class="method-option" 
+              class="method-option paypal-option"
               :class="{ active: paymentMethod === 'paypal' }"
               @click="selectPaymentMethod('paypal')"
             >
-              <div class="method-icon">🔵</div>
-              <div class="method-name">PayPal</div>
-                  <div v-if="paymentMethod === 'paypal'" class="method-check">✓</div>
+              <img class="method-icon" src="../assets/payment-methods/paypal.png" alt="" />
+              <div class="method-option-content">
+                <div class="method-name">PayPal</div>
+                <label class="paypal-save-option" @click.stop>
+                  <input type="checkbox" v-model="savePayPal" :disabled="isProcessing" />
+                  <span>保存此 PayPal 账户，以便下次支付使用</span>
+                </label>
+              </div>
+              <span class="method-radio" :class="{ active: paymentMethod === 'paypal' }"></span>
+            </div>
+            <div
+              class="method-option alipay-option"
+              :class="{ active: paymentMethod === 'alipay_hk' }"
+              @click="selectPaymentMethod('alipay_hk')"
+            >
+              <span class="recommended-badge">推荐</span>
+              <img class="method-icon" src="../assets/payment-methods/alipay-hk.png" alt="" />
+              <div class="method-name">Alipay HK</div>
+              <span class="method-radio" :class="{ active: paymentMethod === 'alipay_hk' }"></span>
                 </div>
               </div>
 
@@ -329,10 +342,10 @@
           <!-- 右侧：订单摘要 & 支付按钮 -->
           <div class="checkout-right">
             <div class="order-summary">
-              <h3 class="summary-title">订单摘要</h3>
+              <h3 class="summary-title">订单概要</h3>
               <div class="summary-content">
                 <div class="summary-item">
-                  <span class="summary-label">商品</span>
+                  <span class="summary-label">订单</span>
                   <span class="summary-value">{{ productName }}</span>
                 </div>
                 <div class="summary-item">
@@ -349,18 +362,18 @@
                 <div class="summary-item total">
                   <span class="summary-label">总计</span>
                   <span class="summary-value total-amount">
-                    US${{ totalAmount.toFixed(2) }}
+                    ¥{{ totalAmount.toFixed(2) }}
                   </span>
                 </div>
               </div>
             </div>
 
             <!-- 账单信息摘要（根据场景显示） -->
-            <div v-if="showBillingInfo" class="billing-summary">
-              <h3 class="summary-title">账单信息</h3>
+            <div class="billing-summary">
+              <h3 class="summary-title">账单内容</h3>
               <div class="billing-summary-content">
                 <div class="billing-summary-item">
-                  <label for="billing-country" class="billing-label">国家</label>
+                  <label for="billing-country" class="billing-label"><span class="required-mark">*</span>国家</label>
                   <select
                     id="billing-country"
                     v-model="billingForm.country"
@@ -368,8 +381,8 @@
                     :disabled="isProcessing"
                     @change="handleBillingCountryChange"
                   >
-                    <option value="US">United States</option>
-                    <option value="CA">Canada</option>
+                    <option value="US">美国</option>
+                    <option value="CA">加拿大</option>
                   </select>
                 </div>
                 <div 
@@ -399,14 +412,11 @@
                     {{ zipCodeError }}
                   </div>
                 </div>
-                <div 
-                  v-if="showEmail"
-                  class="billing-summary-item email-input-wrapper"
+                <div class="billing-summary-item email-input-wrapper"
                   :class="{ 'has-error': emailError, 'is-focused': emailFocused }"
                 >
                   <label class="billing-label email-label">
-                    <span>邮箱（可选）</span>
-                    <span class="email-hint">用于接收收据</span>
+                    <span><span class="required-mark">*</span>邮箱</span>
                   </label>
                   <div class="email-input-container">
                     <svg 
@@ -429,7 +439,7 @@
                       v-model="billingForm.email" 
                       @focus="emailFocused = true"
                       @blur="emailFocused = false; validateEmail()"
-                      placeholder="Enter email for receipt"
+                      placeholder="请输入邮箱"
                       class="billing-input email-input"
                       :disabled="isProcessing"
                     />
@@ -462,11 +472,11 @@
           <span class="terms-text">
             我已阅读并同意
                   <a href="#" class="terms-link" @click.prevent="openTerms">
-                    服务协议
+                    《用户协议》
                   </a>
             和
                   <a href="#" class="terms-link" @click.prevent="openPrivacy">
-                    隐私政策
+                    《隐私政策》
                   </a>
           </span>
         </label>
@@ -487,7 +497,7 @@
                 :disabled="isProcessing || !canQuickPay"
               >
                 <span v-if="isProcessing" class="button-spinner"></span>
-                <span>{{ isProcessing ? '处理中...' : '去支付' }}</span>
+                <span>{{ isProcessing ? '处理中...' : '确认支付' }}</span>
               </button>
               <!-- 其他场景 -->
               <button
@@ -497,7 +507,7 @@
           :disabled="isProcessing || !canSubmit"
         >
                 <span v-if="isProcessing" class="button-spinner"></span>
-                <span>{{ isProcessing ? '处理中...' : '去支付' }}</span>
+                <span>{{ isProcessing ? '处理中...' : '确认支付' }}</span>
         </button>
             </div>
           </div>
@@ -667,11 +677,12 @@ const emit = defineEmits([
 ])
 
 // 基础状态
-const paymentMethod = ref('card')
+const paymentMethod = ref('paypal')
 const paymentStatus = ref('') // '', 'processing', 'success', 'error'
 const errorMessage = ref('')
 const agreedToTerms = ref(true)
 const saveCard = ref(false)
+const savePayPal = ref(false)
 const showCancelDialog = ref(false)
 const showExpiredMessage = ref(false)
 const showExpiredDialog = ref(false) // 支付超时弹窗
@@ -942,6 +953,7 @@ watch(
   resetPaymentStatus()
       agreedToTerms.value = true
       saveCard.value = false
+      savePayPal.value = false
     }
   }
 )
@@ -1334,6 +1346,11 @@ const handleConfirmPayment = async () => {
     return
   }
 
+  if (paymentMethod.value === 'alipay_hk') {
+    await processPayment('alipay_hk')
+    return
+  }
+
   if (paymentMethod.value === 'card') {
     const okNumber = validateCardNumber()
     const okName = validateCardName()
@@ -1500,8 +1517,8 @@ const handleSendCode = () => {
 // handleVerify3DS 函数已移除，3DS 验证逻辑在独立 Webview 中处理
 
 // 支付过程
-const processPayment = async () => {
-  currentPaymentMethod.value = 'card'
+const processPayment = async (method = 'card') => {
+  currentPaymentMethod.value = method
   currentStep.value = 'processing'
   paymentStatus.value = 'processing'
   orderId.value = generateOrderId()
@@ -1613,11 +1630,11 @@ const handlePaymentComplete = () => {
       redirectToGame: true
     })
   } else {
-    // 银行卡支付成功，只触发成功事件，不重定向
+    // 银行卡或本地钱包支付成功，只触发成功事件，不重定向
     emit('payment-success', {
       orderId: orderId.value,
       amount: props.productPrice,
-      paymentMethod: 'card',
+      paymentMethod: currentPaymentMethod.value,
       redirectToGame: false
     })
   }
@@ -3284,7 +3301,72 @@ const openPrivacy = () => {
   }
 }
 
-@media (max-width: 900px) {
+/* Figma 1800:8608 — PC 端收银台视觉 */
+.checkout-overlay { position: absolute; inset: 0; padding: 8px 20px 10px; background: #dedede; }
+.checkout-modal { width: min(1180px, 100%); height: min(680px, 100%); max-width: none; max-height: none; border-radius: 10px; background: #fff; box-shadow: none; }
+.checkout-header { flex: 0 0 48px; justify-content: space-between; padding: 0 17px; color: #fff; background: #252525; border-bottom: 3px solid #f6c914; }
+.checkout-title { margin: 0; font-size: 18px; line-height: 1; font-weight: 700; }
+.checkout-close-btn { width: 24px; height: 24px; padding: 0; color: #fff; font-size: 30px; font-weight: 200; line-height: 20px; border-radius: 0; }
+.checkout-close-btn:hover { color: #f6c914; background: transparent; }
+.checkout-body { padding: 0; overflow: hidden; }
+.checkout-layout { grid-template-columns: minmax(0, 2fr) minmax(240px, 1fr); gap: 0; height: 100%; }
+.checkout-left, .checkout-right { min-height: 0; border-radius: 0; box-shadow: none; }
+.checkout-left { padding: 18px; overflow-y: auto; border-right: 1px solid #d9dde3; }
+.checkout-right { position: relative; display: flex; flex-direction: column; padding: 16px 12px; overflow-y: auto; background: #f7f8fa; }
+.payment-methods h3 { margin: 0 0 14px; font-size: 14px; font-weight: 500; }
+.method-options { gap: 7px; }
+.method-option { position: relative; min-height: 54px; padding: 10px 13px; gap: 10px; border: 1px solid #dce1e7; border-radius: 12px; background: #fff; box-shadow: 0 1px 2px rgba(28, 36, 48, 0.05); }
+.method-option:hover { border-color: #c7cdd6; }
+.method-option.active { border-color: #f1bb00; background: #fffbef; box-shadow: none; }
+.method-option.paypal-option { min-height: 88px; align-items: flex-start; }
+.method-icon { width: 30px; height: 30px; flex: 0 0 30px; object-fit: contain; }
+.method-option-content { flex: 1; min-width: 0; }
+.method-name { min-height: 30px; display: flex; align-items: center; font-size: 14px; font-weight: 500; color: #161c25; }
+.method-radio { width: 16px; height: 16px; flex: 0 0 16px; margin-left: auto; align-self: center; border: 1.5px solid #cbd2dc; border-radius: 50%; background: #fff; }
+.paypal-option .method-radio { margin-top: 9px; align-self: flex-start; }
+.method-radio.active { border: 2px solid #f1b900; box-shadow: inset 0 0 0 3px #fff; background: #f1b900; }
+.paypal-save-option { min-height: 34px; display: flex; align-items: center; gap: 8px; margin: 2px 0 0 -40px; padding: 7px 10px; border-radius: 6px; background: #fff; color: #3f4650; font-size: 12px; cursor: pointer; }
+.paypal-save-option input, .save-billing-checkbox input, .terms-checkbox input { width: 14px; height: 14px; accent-color: #f2bc00; }
+.recommended-badge { position: absolute; left: -1px; top: -10px; padding: 3px 9px; border-radius: 7px 7px 7px 0; color: #fff; background: #f04a3f; font-size: 11px; line-height: 16px; }
+.card-brands { margin-top: 12px; }
+.payment-form, .saved-cards-section, .saved-card-tip { margin-top: 16px; }
+.summary-title { margin: 0 0 5px; font-size: 11px; font-weight: 400; color: #89919c; }
+.order-summary { order: 2; margin: 8px 0 0; }
+.summary-content, .billing-summary-content { padding: 5px 9px; border-radius: 7px; background: #fff; box-shadow: 0 1px 4px rgba(20, 27, 38, 0.06); }
+.summary-item { margin-bottom: 4px; font-size: 11px; color: #1f2630; }
+.summary-item:first-child { display: block; padding: 2px 0 5px; border-bottom: 1px solid #e7e9ed; }
+.summary-item:first-child .summary-label { display: block; margin-bottom: 3px; color: #8a929d; }
+.summary-item:first-child .summary-value { display: block; font-size: 13px; font-weight: 600; }
+.summary-divider { margin: 5px 0; }
+.summary-item.total { margin-bottom: 0; align-items: center; }
+.total-amount { color: #ff3026; font-size: 20px; font-weight: 500; }
+.billing-summary { order: 1; margin: 0; padding: 0; border: 0; }
+.billing-summary-item { position: relative; margin-bottom: 4px; }
+.billing-label, .email-label { position: absolute; top: 3px; left: 8px; z-index: 2; margin: 0; font-size: 9px; line-height: 10px; font-weight: 400; color: #89919c; pointer-events: none; }
+.required-mark { color: #ff4b43; }
+.billing-select, .billing-input, .email-input { height: 32px; min-height: 32px; padding: 12px 8px 3px; border: 1px solid #e0e4e9; border-radius: 6px; font-size: 11px; background: #fff; }
+.billing-select { background-color: #e7e9ed; }
+.email-input { padding-left: 9px; }
+.email-icon, .email-hint, .billing-zip-hint { display: none; }
+.email-input-wrapper { margin-bottom: 4px; }
+.save-billing-summary { margin: 2px 0 0; padding: 0; border: 0; }
+.save-billing-checkbox { gap: 6px; }
+.save-billing-text { color: #525a65; font-size: 11px; }
+.terms-section { order: 3; margin-top: auto; padding: 12px 6px 0; }
+.terms-checkbox { gap: 0; }
+.terms-checkbox input { display: none; }
+.terms-text { font-size: 11px; white-space: nowrap; color: #4f5660; }
+.terms-link { color: #efb900; text-decoration: none; }
+.checkout-footer { order: 4; margin-top: 8px; }
+.confirm-button { min-height: 42px; padding: 10px 16px; border-radius: 8px; background: #2b2b2b; box-shadow: 0 4px 10px rgba(0,0,0,.18); font-size: 15px; font-weight: 500; }
+.confirm-button:hover:not(:disabled) { background: #111; }
+.confirm-button:disabled { opacity: .45; }
+
+@media (max-width: 640px) {
+  .checkout-overlay {
+    padding: 0;
+  }
+
   .checkout-modal {
     width: 100%;
     height: 100%;
@@ -3294,6 +3376,16 @@ const openPrivacy = () => {
 
   .checkout-layout {
     grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+
+  .checkout-left {
+    border-right: 0;
+    border-bottom: 1px solid #d9dde3;
+  }
+
+  .checkout-right {
+    min-height: 420px;
   }
 }
 </style>

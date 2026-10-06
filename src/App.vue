@@ -1,9 +1,28 @@
 <template>
   <div class="app-container">
+    <button
+      v-if="!showScenarioPanel"
+      class="scenario-panel-trigger"
+      type="button"
+      @click="showScenarioPanel = true"
+    >
+      场景模拟
+    </button>
+    <div
+      v-if="showScenarioPanel"
+      class="scenario-panel-backdrop"
+      @click="showScenarioPanel = false"
+    ></div>
     <!-- 左侧调试区 -->
-    <aside class="debug-panel">
+    <aside v-if="showScenarioPanel" class="debug-panel scenario-drawer">
       <div class="debug-header">
         <h2>调试区</h2>
+        <button
+          class="scenario-panel-close"
+          type="button"
+          aria-label="关闭场景模拟"
+          @click="showScenarioPanel = false"
+        >×</button>
       </div>
       <div class="debug-content">
         <!-- 支付场景选择 -->
@@ -224,7 +243,7 @@
 
     <!-- 中间游戏界面demo -->
     <main class="game-demo">
-      <div class="game-container">
+      <div v-if="!checkoutVisible" class="game-container">
         <div class="game-header">
           <h1>游戏界面 Demo</h1>
         </div>
@@ -261,7 +280,7 @@
     </main>
 
     <!-- 右侧交互说明 -->
-    <aside class="help-panel">
+    <aside class="help-panel design-hidden-panel">
       <div class="help-header">
         <h2>交互说明</h2>
       </div>
@@ -378,11 +397,12 @@ import Checkout from './components/Checkout.vue'
 import CardPayment from './components/CardPayment.vue'
 import PayPalPayment from './components/PayPalPayment.vue'
 
-const checkoutVisible = ref(false)
+const checkoutVisible = ref(true)
 const cardVisible = ref(false)
+const showScenarioPanel = ref(false)
 const paymentScenario = ref('normal')
-const productName = ref('游戏道具')
-const productPrice = ref('9.99')
+const productName = ref('预谋的纸质书签')
+const productPrice = ref('88')
 const cardFormData = ref({
   name: '',
   number: '',
@@ -477,6 +497,8 @@ const clearLogs = () => {
 
 const selectScenario = (scenario) => {
   paymentScenario.value = scenario
+  checkoutVisible.value = true
+  showScenarioPanel.value = false
   addLog(`切换支付场景：${getScenarioName(scenario)}`)
 }
 
@@ -629,6 +651,64 @@ const handleCardError = (errorMessage) => {
   background-color: #f5f5f5;
 }
 
+.scenario-panel-trigger {
+  position: fixed;
+  top: 76px;
+  left: 0;
+  z-index: 12000;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 0 8px 8px 0;
+  color: #fff;
+  background: #252525;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.scenario-panel-trigger:hover {
+  color: #f6c914;
+}
+
+.scenario-panel-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 12001;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.scenario-drawer {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 12002;
+  width: min(430px, 92vw);
+  min-width: 0;
+  box-shadow: 8px 0 28px rgba(0, 0, 0, 0.22);
+}
+
+.scenario-panel-close {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  color: #333;
+  background: transparent;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.scenario-drawer .scenario-row {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.scenario-drawer .scenario-item {
+  min-width: 0;
+}
+
+.scenario-drawer .scenario-name,
+.scenario-drawer .scenario-desc {
+  overflow-wrap: anywhere;
+}
+
 /* 左侧调试区 */
 .debug-panel {
   width: 25%;
@@ -644,6 +724,9 @@ const handleCardError = (errorMessage) => {
   padding: 20px;
   border-bottom: 1px solid #e0e0e0;
   background-color: #fafafa;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .debug-header h2 {
@@ -1291,5 +1374,8 @@ const handleCardError = (errorMessage) => {
     transform: rotate(360deg);
   }
 }
-</style>
 
+.design-hidden-panel {
+  display: none !important;
+}
+</style>
