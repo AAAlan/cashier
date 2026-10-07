@@ -373,17 +373,15 @@
               <h3 class="summary-title">账单内容</h3>
               <div class="billing-summary-content">
                 <div class="billing-summary-item">
-                  <label for="billing-country" class="billing-label"><span class="required-mark">*</span>国家</label>
-                  <select
+                  <label for="billing-country" class="billing-label">国家</label>
+                  <input
                     id="billing-country"
-                    v-model="billingForm.country"
-                    class="billing-select"
-                    :disabled="isProcessing"
-                    @change="handleBillingCountryChange"
-                  >
-                    <option value="US">美国</option>
-                    <option value="CA">加拿大</option>
-                  </select>
+                    type="text"
+                    :value="billingCountryName"
+                    class="billing-input billing-country-readonly"
+                    readonly
+                    aria-readonly="true"
+                  />
                 </div>
                 <div 
                   v-if="showZipCode"
@@ -400,8 +398,8 @@
                     @blur="zipCodeFocused = false; validateZipCode()"
                     :placeholder="zipCodePlaceholder"
                     autocomplete="postal-code"
-                    :inputmode="billingForm.country === 'US' ? 'numeric' : 'text'"
-                    :maxlength="billingForm.country === 'US' ? 10 : 7"
+                    :inputmode="billingCountryCode === 'US' ? 'numeric' : 'text'"
+                    :maxlength="billingCountryCode === 'US' ? 10 : 7"
                     aria-describedby="billing-zip-hint"
                     :aria-invalid="!!zipCodeError"
                     class="billing-input"
@@ -625,6 +623,10 @@ const props = defineProps({
     type: String,
     default: 'normal', // normal, card_error, paypal_error, network_error, timeout, 3ds_verification, saved_card
   },
+  countryCode: {
+    type: String,
+    default: 'US',
+  },
   initialCardData: {
     type: Object,
     default: () => null,
@@ -735,24 +737,29 @@ const cardForm = ref({
 
 // 账单信息
 const billingForm = ref({
-  country: 'US',
   zipCode: '',
 })
 const saveBillingInfo = ref(false)
 const zipCodeFocused = ref(false)
 const zipCodeError = ref('')
+const billingCountryCode = computed(() => (
+  props.countryCode?.trim().toUpperCase() === 'CA' ? 'CA' : 'US'
+))
+const billingCountryName = computed(() => (
+  billingCountryCode.value === 'CA' ? '加拿大' : '美国'
+))
 const isZipCodeValid = computed(() => {
   const zipCode = billingForm.value.zipCode.trim()
-  if (billingForm.value.country === 'CA') {
+  if (billingCountryCode.value === 'CA') {
     return /^[ABCEGHJ-NPRSTVXY]\d[ABCEGHJ-NPRSTV-Z] ?\d[ABCEGHJ-NPRSTV-Z]\d$/i.test(zipCode)
   }
   return /^\d{5}(?:-?\d{4})?$/.test(zipCode)
 })
 const zipCodePlaceholder = computed(() => (
-  billingForm.value.country === 'CA' ? 'A1A 1A1' : '12345 或 12345-6789'
+  billingCountryCode.value === 'CA' ? 'A1A 1A1' : '12345 或 12345-6789'
 ))
 const zipCodeHint = computed(() => (
-  billingForm.value.country === 'CA'
+  billingCountryCode.value === 'CA'
     ? '加拿大邮编格式：字母和数字交替，共 6 位'
     : '5 位邮编，可选填后 4 位（ZIP+4）'
 ))
@@ -907,6 +914,11 @@ watch(
   }
 )
 
+watch(billingCountryCode, () => {
+  billingForm.value.zipCode = ''
+  zipCodeError.value = ''
+})
+
 // 监听场景切换
 watch(
   () => props.paymentScenario,
@@ -1039,7 +1051,6 @@ const resetPaymentStatus = () => {
 
   // 重置账单信息
   billingForm.value = {
-    country: 'US',
     zipCode: '',
   }
   saveBillingInfo.value = false
@@ -1202,11 +1213,6 @@ const validateCVV = () => {
 }
 
 // 验证邮编
-const handleBillingCountryChange = () => {
-  billingForm.value.zipCode = ''
-  zipCodeError.value = ''
-}
-
 const validateZipCode = () => {
   const zipCode = billingForm.value.zipCode.trim()
   if (!zipCode) {
@@ -1214,12 +1220,12 @@ const validateZipCode = () => {
     return false
   }
   if (!isZipCodeValid.value) {
-    zipCodeError.value = billingForm.value.country === 'CA'
+    zipCodeError.value = billingCountryCode.value === 'CA'
       ? '请输入有效的加拿大邮编（如 A1A 1A1）'
       : '请输入 5 位邮编，或完整的 ZIP+4（如 12345-6789）'
     return false
   }
-  billingForm.value.zipCode = billingForm.value.country === 'CA'
+  billingForm.value.zipCode = billingCountryCode.value === 'CA'
     ? zipCode.toUpperCase().replace(/^(.{3}) ?(.{3})$/, '$1 $2')
     : zipCode.replace(/^(\d{5})(\d{4})$/, '$1-$2')
   zipCodeError.value = ''
@@ -3194,6 +3200,7 @@ const openPrivacy = () => {
 .required-mark { color: #ff4b43; }
 .billing-select, .billing-input { height: 32px; min-height: 32px; padding: 12px 8px 3px; border: 1px solid #e0e4e9; border-radius: 6px; font-size: 11px; background: #fff; }
 .billing-select { background-color: #e7e9ed; }
+.billing-country-readonly { color: #111827; background-color: #e7e9ed; cursor: default; }
 .billing-zip-hint { display: none; }
 .save-billing-summary { margin: 2px 0 0; padding: 0; border: 0; }
 .save-billing-checkbox { gap: 6px; }

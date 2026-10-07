@@ -166,6 +166,26 @@
           </div>
         </div>
 
+        <div class="debug-section">
+          <h3 class="section-title">用户 Country Code</h3>
+          <div class="country-code-options">
+            <button
+              type="button"
+              :class="{ active: userCountryCode === 'US' }"
+              @click="setUserCountryCode('US')"
+            >
+              US · 美国
+            </button>
+            <button
+              type="button"
+              :class="{ active: userCountryCode === 'CA' }"
+              @click="setUserCountryCode('CA')"
+            >
+              CA · 加拿大
+            </button>
+          </div>
+        </div>
+
         <!-- Mock卡信息 -->
         <div class="debug-section">
           <h3 class="section-title">Mock 卡信息</h3>
@@ -246,6 +266,7 @@
           :product-name="productName"
           :product-price="productPrice"
           :payment-scenario="paymentScenario"
+          :country-code="userCountryCode"
           :initial-card-data="mockCardData"
           @close="handleCheckoutClose"
           @payment-success="handlePaymentSuccess"
@@ -379,6 +400,7 @@ const checkoutVisible = ref(true)
 const cardVisible = ref(false)
 const showScenarioPanel = ref(false)
 const paymentScenario = ref('normal')
+const userCountryCode = ref('US')
 const productName = ref('预谋的纸质书签')
 const productPrice = ref('88')
 const cardFormData = ref({
@@ -476,6 +498,11 @@ const selectScenario = (scenario) => {
   checkoutVisible.value = true
   showScenarioPanel.value = false
   addLog(`切换支付场景：${getScenarioName(scenario)}`)
+}
+
+const setUserCountryCode = (countryCode) => {
+  userCountryCode.value = countryCode
+  addLog(`用户 Country Code：${countryCode}`)
 }
 
 const handleProductClick = () => {
@@ -683,6 +710,29 @@ const handleCardError = (errorMessage) => {
 .scenario-drawer .scenario-name,
 .scenario-drawer .scenario-desc {
   overflow-wrap: anywhere;
+}
+
+.country-code-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.country-code-options button {
+  padding: 10px 8px;
+  border: 1px solid #d9dde3;
+  border-radius: 7px;
+  color: #444;
+  background: #fff;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.country-code-options button.active {
+  border-color: #f1bb00;
+  background: #fffbef;
+  color: #222;
+  font-weight: 600;
 }
 
 /* 左侧调试区 */
