@@ -412,42 +412,6 @@
                     {{ zipCodeError }}
                   </div>
                 </div>
-                <div class="billing-summary-item email-input-wrapper"
-                  :class="{ 'has-error': emailError, 'is-focused': emailFocused }"
-                >
-                  <label class="billing-label email-label">
-                    <span><span class="required-mark">*</span>邮箱</span>
-                  </label>
-                  <div class="email-input-container">
-                    <svg 
-                      class="email-icon" 
-                      width="16" 
-                      height="16" 
-                      viewBox="0 0 16 16" 
-                      fill="none"
-                    >
-                      <path 
-                        d="M2 4L8 8L14 4M2 4H14M2 4V12H14V4" 
-                        stroke="currentColor" 
-                        stroke-width="1.5" 
-                        stroke-linecap="round" 
-                        stroke-linejoin="round"
-                      />
-                    </svg>
-                    <input 
-                      type="email" 
-                      v-model="billingForm.email" 
-                      @focus="emailFocused = true"
-                      @blur="emailFocused = false; validateEmail()"
-                      placeholder="请输入邮箱"
-                      class="billing-input email-input"
-                      :disabled="isProcessing"
-                    />
-                  </div>
-                  <div v-if="emailError" class="billing-error-message email-error">
-                    {{ emailError }}
-                  </div>
-                </div>
                 <div class="save-billing-summary">
                   <label class="save-billing-checkbox">
                     <input 
@@ -773,7 +737,6 @@ const cardForm = ref({
 const billingForm = ref({
   country: 'US',
   zipCode: '',
-  email: '',
 })
 const saveBillingInfo = ref(false)
 const zipCodeFocused = ref(false)
@@ -793,8 +756,6 @@ const zipCodeHint = computed(() => (
     ? '加拿大邮编格式：字母和数字交替，共 6 位'
     : '5 位邮编，可选填后 4 位（ZIP+4）'
 ))
-const emailFocused = ref(false)
-const emailError = ref('')
 
 // 是否显示账单信息字段
 const showBillingInfo = computed(() => {
@@ -804,11 +765,6 @@ const showBillingInfo = computed(() => {
 // 是否显示邮编字段
 const showZipCode = computed(() => {
   return props.paymentScenario === 'collect_zip_code'
-})
-
-// 是否显示邮箱字段
-const showEmail = computed(() => {
-  return false
 })
 
 // 税费计算（根据邮编，只在收集邮编场景且邮编填写完成后计算）
@@ -903,8 +859,7 @@ const canSubmit = computed(() => {
   if (showBillingInfo.value) {
       const billingValid = (
         (!showZipCode.value || isZipCodeValid.value) &&
-        !zipCodeError.value &&
-        !emailError.value
+        !zipCodeError.value
       )
       return cardValid && billingValid
     }
@@ -1086,7 +1041,6 @@ const resetPaymentStatus = () => {
   billingForm.value = {
     country: 'US',
     zipCode: '',
-    email: '',
   }
   saveBillingInfo.value = false
 
@@ -1106,7 +1060,6 @@ const clearErrors = () => {
   expiryError.value = ''
   cvvError.value = ''
   zipCodeError.value = ''
-  emailError.value = ''
 }
 
 const formatCardNumber = (event) => {
@@ -1273,24 +1226,6 @@ const validateZipCode = () => {
   return true
 }
 
-// 验证邮箱（可选项：为空时不报错，有值时校验格式）
-const validateEmail = () => {
-  const email = billingForm.value.email.trim()
-  // 非必填：如果为空，认为通过校验
-  if (!email) {
-    emailError.value = ''
-    return true
-  }
-  // 简单的邮箱格式验证（仅在有值时校验）
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  if (!emailRegex.test(email)) {
-    emailError.value = 'Please enter a valid email address'
-    return false
-  }
-  emailError.value = ''
-  return true
-}
-
 // 验证账单地址
 // 操作
 const selectPaymentMethod = (method) => {
@@ -1357,10 +1292,6 @@ const handleConfirmPayment = async () => {
       if (showZipCode.value) {
         const okZipCode = validateZipCode()
         if (!okZipCode) return
-      }
-      if (showEmail.value) {
-        const okEmail = validateEmail()
-        if (!okEmail) return
       }
     }
 
@@ -2507,83 +2438,6 @@ const openPrivacy = () => {
   color: #dc2626;
 }
 
-/* 邮箱输入框优化样式 */
-.email-input-wrapper {
-  margin-bottom: 16px;
-}
-
-.email-label {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-}
-
-.email-hint {
-  font-size: 11px;
-  font-weight: 400;
-  color: #6b7280;
-}
-
-.email-input-container {
-  position: relative;
-  display: flex;
-  align-items: center;
-  width: 100%;
-  min-width: 0;
-}
-
-.email-icon {
-  position: absolute;
-  left: 12px;
-  color: #9ca3af;
-  pointer-events: none;
-  transition: color 0.15s;
-  z-index: 1;
-}
-
-.email-input-wrapper.is-focused .email-icon {
-  color: #3b82f6;
-}
-
-.email-input-wrapper.has-error .email-icon {
-  color: #ef4444;
-}
-
-.email-input {
-  width: 100%;
-  padding-left: 38px;
-  padding-right: 12px;
-  padding-top: 10px;
-  padding-bottom: 10px;
-  font-size: 14px;
-  line-height: 1.5;
-  box-sizing: border-box;
-}
-
-.email-input::placeholder {
-  color: #9ca3af;
-  font-size: 13px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.email-input:focus {
-  padding-left: 38px;
-}
-
-.email-input-container {
-  width: 100%;
-}
-
-.email-error {
-  margin-top: 6px;
-  font-size: 12px;
-  line-height: 1.4;
-  padding-left: 2px;
-}
-
 .save-billing-summary {
   margin-top: 12px;
   padding-top: 12px;
@@ -3336,13 +3190,11 @@ const openPrivacy = () => {
 .total-amount { color: #ff3026; font-size: 20px; font-weight: 500; }
 .billing-summary { order: 1; margin: 0; padding: 0; border: 0; }
 .billing-summary-item { position: relative; margin-bottom: 4px; }
-.billing-label, .email-label { position: absolute; top: 3px; left: 8px; z-index: 2; margin: 0; font-size: 9px; line-height: 10px; font-weight: 400; color: #89919c; pointer-events: none; }
+.billing-label { position: absolute; top: 3px; left: 8px; z-index: 2; margin: 0; font-size: 9px; line-height: 10px; font-weight: 400; color: #89919c; pointer-events: none; }
 .required-mark { color: #ff4b43; }
-.billing-select, .billing-input, .email-input { height: 32px; min-height: 32px; padding: 12px 8px 3px; border: 1px solid #e0e4e9; border-radius: 6px; font-size: 11px; background: #fff; }
+.billing-select, .billing-input { height: 32px; min-height: 32px; padding: 12px 8px 3px; border: 1px solid #e0e4e9; border-radius: 6px; font-size: 11px; background: #fff; }
 .billing-select { background-color: #e7e9ed; }
-.email-input { padding-left: 9px; }
-.email-icon, .email-hint, .billing-zip-hint { display: none; }
-.email-input-wrapper { margin-bottom: 4px; }
+.billing-zip-hint { display: none; }
 .save-billing-summary { margin: 2px 0 0; padding: 0; border: 0; }
 .save-billing-checkbox { gap: 6px; }
 .save-billing-text { color: #525a65; font-size: 11px; }
