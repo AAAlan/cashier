@@ -798,27 +798,22 @@ const emailError = ref('')
 
 // 是否显示账单信息字段
 const showBillingInfo = computed(() => {
-  return props.paymentScenario === 'collect_zip_code' || 
-         props.paymentScenario === 'collect_email' ||
-         props.paymentScenario === 'collect_zip_and_email'
+  return props.paymentScenario === 'collect_zip_code'
 })
 
 // 是否显示邮编字段
 const showZipCode = computed(() => {
-  return props.paymentScenario === 'collect_zip_code' ||
-         props.paymentScenario === 'collect_zip_and_email'
+  return props.paymentScenario === 'collect_zip_code'
 })
 
 // 是否显示邮箱字段
 const showEmail = computed(() => {
-  return props.paymentScenario === 'collect_email' ||
-         props.paymentScenario === 'collect_zip_and_email'
+  return false
 })
 
 // 税费计算（根据邮编，只在收集邮编场景且邮编填写完成后计算）
 const taxAmount = computed(() => {
-  if (props.paymentScenario !== 'collect_zip_code' && 
-      props.paymentScenario !== 'collect_zip_and_email') {
+  if (props.paymentScenario !== 'collect_zip_code') {
     return 0
   }
   if (!isZipCodeValid.value) {
@@ -833,8 +828,7 @@ const taxAmount = computed(() => {
 
 // 是否显示税费字段
 const showTax = computed(() => {
-  return props.paymentScenario === 'collect_zip_code' ||
-         props.paymentScenario === 'collect_zip_and_email'
+  return props.paymentScenario === 'collect_zip_code'
 })
 
 // 总金额（包含税费）

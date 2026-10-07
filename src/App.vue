@@ -162,28 +162,6 @@
                   <div class="scenario-desc">收银台收集用户邮编信息</div>
               </div>
               </div>
-              <div 
-                class="scenario-item" 
-                :class="{ active: paymentScenario === 'collect_email' }"
-                @click="selectScenario('collect_email')"
-              >
-                <div class="scenario-icon">📧</div>
-                <div class="scenario-info">
-                  <div class="scenario-name">收集用户邮箱</div>
-                  <div class="scenario-desc">收银台收集用户邮箱信息</div>
-                </div>
-              </div>
-              <div 
-                class="scenario-item" 
-                :class="{ active: paymentScenario === 'collect_zip_and_email' }"
-                @click="selectScenario('collect_zip_and_email')"
-              >
-                <div class="scenario-icon">📮📧</div>
-                <div class="scenario-info">
-                  <div class="scenario-name">收集邮编和邮箱</div>
-                  <div class="scenario-desc">收银台同时收集邮编和邮箱信息</div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -304,7 +282,7 @@
         </section>
         <section class="help-section">
           <h3 class="help-section-title">账单信息</h3>
-          <p class="help-text">当左侧选择「收集邮编」「收集邮箱」或「收集邮编和邮箱」时，右侧会显示账单信息区域，需按提示填写邮编或邮箱；填写邮编后会计算并显示税费与总计。</p>
+          <p class="help-text">选择「收集邮编」时，右侧会显示邮编输入区域；填写有效邮编后会计算并显示税费与总计。</p>
         </section>
         <section class="help-section">
           <h3 class="help-section-title">协议与提交</h3>
@@ -474,9 +452,7 @@ const getScenarioName = (scenario) => {
     'saved_card': '免 CVV 快速支付（仅演示）',
     'saved_card_with_cvv': '已保存卡需 CVV',
     'generic_error': '通用支付失败',
-    'collect_zip_code': '收集邮编信息',
-    'collect_email': '收集用户邮箱',
-    'collect_zip_and_email': '收集邮编和邮箱'
+    'collect_zip_code': '收集邮编信息'
   }
   return names[scenario] || '未知'
 }
