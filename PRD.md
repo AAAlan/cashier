@@ -1,6 +1,10 @@
 # 端内 Web 收银台支付流程 PRD
 
-本文记录已确认的游戏内支付流程，覆盖下单、端内 Web 收银台支付、服务端支付确认与发货，以及支付 SDK 客户端查单后通知游戏客户端展示结果。不包含异常恢复和补单流程。
+本文记录已确认的游戏内支付流程，覆盖商品信息下发、下单、端内 Web 收银台支付、服务端支付确认与发货，以及支付 SDK 客户端查单后通知游戏客户端展示结果。不包含异常恢复和补单流程。
+
+## 商品信息下发
+
+游戏客户端向支付 SDK 客户端请求商品下发。支付 SDK 客户端向商品计费点服务查询商品信息，再将查询结果返回给游戏客户端，由游戏客户端向用户展示商品信息。
 
 ## 支付结果规则
 
@@ -20,11 +24,19 @@ sequenceDiagram
     participant GC as 游戏客户端
     participant GS as 游戏服务端
     participant SC as 支付SDK客户端
+    participant BS as 商品计费点服务
     participant SS as 支付SDK服务端
     participant W as 支付SDK端内Web收银台
     participant PS as 支付渠道服务端
 
-    Note over U,PS: 一、创建订单
+    Note over U,BS: 一、商品信息下发
+    GC->>SC: 请求商品下发
+    SC->>BS: query商品信息
+    BS-->>SC: 返回商品信息
+    SC-->>GC: 返回商品信息
+    GC-->>U: 展示商品信息
+
+    Note over U,PS: 二、创建订单
     U->>GC: 选择商品，点击购买
     GC->>GS: 请求创建游戏订单
     GS->>GS: 校验商品、金额，创建待支付订单
@@ -34,7 +46,7 @@ sequenceDiagram
     SS->>SS: 验签、校验参数，关联游戏订单
     SS-->>SC: 返回支付订单号、收银台地址
 
-    Note over U,PS: 二、打开收银台
+    Note over U,PS: 三、打开收银台
     SC->>W: 打开端内Web收银台
     W->>SS: 获取订单信息、可用支付渠道
     SS-->>W: 返回商品、金额、渠道列表
@@ -54,7 +66,7 @@ sequenceDiagram
         W-->>U: 展示渠道支付页面或拉起支付
         U->>PS: 完成授权及付款（经渠道页面）
 
-        Note over U,PS: 三、服务端处理与客户端查单并行，先后顺序不固定
+        Note over U,PS: 四、服务端处理与客户端查单并行，先后顺序不固定
         par 服务端异步确认与发货
             PS-)SS: 异步通知支付结果
             SS->>SS: 验签、核对订单及金额，幂等更新
